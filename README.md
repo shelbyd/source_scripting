@@ -15,7 +15,7 @@ Install it:
 Make a source scripting file (commands.ss). The following script will make `T` buy an ak47 and `H` do a jump smoke.
 
 ```ruby
-bind :t "buy ak47"
+bind :t, "buy ak47"
 
 bind :h do |action|
   action.on do |a|
