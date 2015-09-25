@@ -14,15 +14,19 @@ module ScriptTestHelpers
       self
     end
 
-    def has_run_commands?(commands)
-      commands_run.include? commands
+    def has_run_command?(command)
+      commands_run.include? command
     end
 
-    private
+    def has_run_commands?(commands)
+      commands.all? { |c| has_run_command? c }
+    end
 
     def commands_run
       @commands_run ||= []
     end
+
+    private
 
     def commands_run=(commands)
       @commands_run = commands
@@ -36,8 +40,13 @@ module ScriptTestHelpers
       @bindings ||= {}
     end
 
+    def aliases
+      @aliases ||= {}
+    end
+
     def execute(subscript)
       return [] if subscript.nil?
+      subscript = subscript.strip
       if subscript.include? "\n"
         return subscript.split("\n").map do |line|
           execute line
@@ -51,7 +60,23 @@ module ScriptTestHelpers
         return []
       end
 
-      subscript.split(';')
+      if subscript.start_with? "alias"
+        match = subscript.match /alias ([^\s]+) "(.*)"/
+        if match.nil?
+          match = subscript.match /alias ([^\s]+) ([^\s]+)/
+        end
+        key = match[1]
+        aliases[key] = match[2]
+        return []
+      end
+
+      subscript.split(';').map do |command|
+        if aliases[command].nil?
+          command
+        else
+          execute aliases[command]
+        end
+      end.flatten
     end
   end
 end
