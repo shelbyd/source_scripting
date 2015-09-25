@@ -6,7 +6,7 @@ module ScriptTestHelpers
   class ScriptTest < Struct.new(:script)
     def initialize(script)
       super(script)
-      execute(script)
+      self.commands_run += execute(script)
     end
 
     def pressing(key)
@@ -47,6 +47,7 @@ module ScriptTestHelpers
     def execute(subscript)
       return [] if subscript.nil?
       subscript = subscript.strip
+
       if subscript.include? "\n"
         return subscript.split("\n").map do |line|
           execute line
@@ -54,19 +55,31 @@ module ScriptTestHelpers
       end
 
       if subscript.start_with? "bind"
-        match = subscript.match /bind (.+) "(.+)"/
-        key = match[1].to_sym
-        bindings[key] = match[2]
+        match = subscript.match /bind ([^\s]+) "([^"]*)"$/
+        raise "Invalid script: '#{subscript}'" if match.nil?
+        key = match[1]
+        key_match = key.match(/"(.*)"/)
+        unless key_match.nil?
+          key = key_match[1]
+        end
+        bindings[key.to_sym] = match[2]
         return []
       end
 
       if subscript.start_with? "alias"
-        match = subscript.match /alias ([^\s]+) "(.*)"/
+        match = subscript.match /alias ([^\s]+) "([^"]*)"$/
         if match.nil?
-          match = subscript.match /alias ([^\s]+) ([^\s]+)/
+          match = subscript.match /alias ([^\s]+) ([^\s]+)$/
         end
-        key = match[1]
-        aliases[key] = match[2]
+        raise "Invalid script: '#{subscript}'" if match.nil?
+
+        name = match[1]
+        name_match = name.match(/"(.*)"/)
+        unless name_match.nil?
+          name = name_match[1]
+        end
+
+        aliases[name] = match[2]
         return []
       end
 

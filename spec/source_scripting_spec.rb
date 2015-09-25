@@ -54,14 +54,37 @@ describe SourceScripting do
       expect(with_script(script).pressing(:t)).to run_command('baz')
     end
 
-    it 'fails with nested quotes' do
+    it 'can have quotes in bind' do
       script = """
-        alias foo \"alias bar \"baz\"\"
-        foo
-        bar
+        bind \"t\" \"foo\"
       """
 
-      expect(with_script(script).pressing(:t)).not_to run_command('baz')
+      expect(with_script(script).pressing(:t)).to run_command('foo')
+    end
+
+    it 'fails with invalid bind' do
+      script = """
+        bind \"t\" \"run \"fake\"\"
+      """
+
+      expect { with_script(script) }.to raise_error "Invalid script: 'bind \"t\" \"run \"fake\"\"'"
+    end
+
+    it 'alias can have quotes in name' do
+      script = """
+        alias \"foo\" \"run\"
+        foo
+      """
+
+      expect(with_script(script).pressing(:t)).to run_command('run')
+    end
+
+    it 'fails with invalid alias' do
+      script = """
+        alias foo \"run \"fake\"\"
+      """
+
+      expect { with_script(script) }.to raise_error "Invalid script: 'alias foo \"run \"fake\"\"'"
     end
   end
 end
