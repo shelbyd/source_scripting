@@ -56,13 +56,14 @@ module ScriptTestHelpers
 
       if subscript.start_with? "bind"
         match = subscript.match /bind ([^\s]+) "([^"]*)"$/
-        raise "Invalid script: '#{subscript}'" if match.nil?
-        key = match[1]
-        key_match = key.match(/"(.*)"/)
-        unless key_match.nil?
-          key = key_match[1]
+        if match.nil?
+          match = subscript.match /bind ([^\s]+) ([^\s]+)$/
         end
-        bindings[key.to_sym] = match[2]
+        raise "Invalid script: '#{subscript}'" if match.nil?
+
+        key = unwrap match[1]
+        command = unwrap match[2]
+        bindings[key.to_sym] = command
         return []
       end
 
@@ -73,12 +74,7 @@ module ScriptTestHelpers
         end
         raise "Invalid script: '#{subscript}'" if match.nil?
 
-        name = match[1]
-        name_match = name.match(/"(.*)"/)
-        unless name_match.nil?
-          name = name_match[1]
-        end
-
+        name = unwrap match[1]
         aliases[name] = match[2]
         return []
       end
@@ -90,6 +86,15 @@ module ScriptTestHelpers
           execute aliases[command]
         end
       end.flatten
+    end
+
+    def unwrap(value)
+      value_match = value.match(/"(.*)"/)
+      if value_match.nil?
+        value
+      else
+        value_match[1]
+      end
     end
   end
 end

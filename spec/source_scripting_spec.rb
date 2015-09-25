@@ -86,5 +86,13 @@ describe SourceScripting do
 
       expect { with_script(script) }.to raise_error "Invalid script: 'alias foo \"run \"fake\"\"'"
     end
+
+    it 'does not require quotes in binds' do
+      script = """
+        bind t foo
+      """
+
+      expect(with_script(script).pressing(:t)).to run_command('foo')
+    end
   end
 end
